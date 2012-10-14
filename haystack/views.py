@@ -13,27 +13,21 @@ RESULTS_PER_PAGE = getattr(settings, 'HAYSTACK_SEARCH_RESULTS_PER_PAGE', 20)
 class SearchView(object):
     __name__ = 'SearchView'
     template = 'search/search.html'
+    form_class = ModelSearchForm
     extra_context = {}
     query = ''
     results = EmptySearchQuerySet()
+    searchqueryset = None
     request = None
     form = None
     results_per_page = RESULTS_PER_PAGE
+    context_class = RequestContext
+    load_all = True
 
-    def __init__(self, template=None, load_all=True, form_class=None, searchqueryset=None, context_class=RequestContext, results_per_page=None):
-        self.load_all = load_all
-        self.form_class = form_class
-        self.context_class = context_class
-        self.searchqueryset = searchqueryset
-
-        if form_class is None:
-            self.form_class = ModelSearchForm
-
-        if not results_per_page is None:
-            self.results_per_page = results_per_page
-
-        if template:
-            self.template = template
+    def __init__(self, **initkwargs):
+        """Optionally override default attributes"""
+        for key, value in initkwargs.iteritems():
+            setattr(self, key, value)
 
     def __call__(self, request):
         """
@@ -152,13 +146,7 @@ def search_view_factory(view_class=SearchView, *args, **kwargs):
 
 class FacetedSearchView(SearchView):
     __name__ = 'FacetedSearchView'
-
-    def __init__(self, *args, **kwargs):
-        # Needed to switch out the default form class.
-        if kwargs.get('form_class') is None:
-            kwargs['form_class'] = FacetedSearchForm
-
-        super(FacetedSearchView, self).__init__(*args, **kwargs)
+    form_class = FacetedSearchForm
 
     def build_form(self, form_kwargs=None):
         if form_kwargs is None:
